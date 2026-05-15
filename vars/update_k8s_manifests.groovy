@@ -7,8 +7,8 @@ def call(Map config = [:]) {
     def imageTag = config.imageTag ?: error("Image tag is required")
     def manifestsPath = config.manifestsPath ?: 'kubernetes'
     def gitCredentials = config.gitCredentials ?: 'github-credentials'
-    def gitUserName = config.gitUserName ?: 'Jenkins CI'
-    def gitUserEmail = config.gitUserEmail ?: 'jenkins@example.com'
+    def gitUserName = config.gitUserName ?: 'Suchit CI'
+    def gitUserEmail = config.gitUserEmail ?: 'suchit@example.com'
     
     echo "Updating Kubernetes manifests with image tag: ${imageTag}"
     
@@ -23,20 +23,13 @@ def call(Map config = [:]) {
             git config user.email "${gitUserEmail}"
         """
         
-        // Update deployment manifests with new image tags - using proper Linux sed syntax
+        // Update deployment manifests with new image tags
         sh """
-            # Update main application deployment - note the correct image name is trainwithshubham/easyshop-app
-            sed -i "s|image: trainwithshubham/easyshop-app:.*|image: trainwithshubham/easyshop-app:${imageTag}|g" ${manifestsPath}/08-easyshop-deployment.yaml
+            # Update backend deployment
+            sed -i "s|image: suchitdeshmukh/wanderlust-backend-beta:.*|image: suchitdeshmukh/wanderlust-backend-beta:${imageTag}|g" ${manifestsPath}/backend.yaml
             
-            # Update migration job if it exists
-            if [ -f "${manifestsPath}/12-migration-job.yaml" ]; then
-                sed -i "s|image: trainwithshubham/easyshop-migration:.*|image: trainwithshubham/easyshop-migration:${imageTag}|g" ${manifestsPath}/12-migration-job.yaml
-            fi
-            
-            # Ensure ingress is using the correct domain
-            if [ -f "${manifestsPath}/10-ingress.yaml" ]; then
-                sed -i "s|host: .*|host: easyshop.letsdeployit.com|g" ${manifestsPath}/10-ingress.yaml
-            fi
+            # Update frontend deployment
+            sed -i "s|image: suchitdeshmukh/wanderlust-frontend-beta:.*|image: suchitdeshmukh/wanderlust-frontend-beta:${imageTag}|g" ${manifestsPath}/frontend.yaml
             
             # Check for changes
             if git diff --quiet; then
@@ -44,10 +37,10 @@ def call(Map config = [:]) {
             else
                 # Commit and push changes
                 git add ${manifestsPath}/*.yaml
-                git commit -m "Update image tags to ${imageTag} and ensure correct domain [ci skip]"
+                git commit -m "Update image tags to ${imageTag} [ci skip]"
                 
-                # Set up credentials for push
-                git remote set-url origin https://\${GIT_USERNAME}:\${GIT_PASSWORD}@github.com/LondheShubham153/tws-e-commerce-app.git
+                # Push changes to your GitHub repo
+                git remote set-url origin https://\${GIT_USERNAME}:\${GIT_PASSWORD}@github.com/YOUR_GITHUB_USERNAME/Wanderlust-Mega-Project.git
                 git push origin HEAD:\${GIT_BRANCH}
             fi
         """
